@@ -7,7 +7,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-export async function POST(req: Request): Promise<Response> {
+export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get("file");

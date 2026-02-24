@@ -1,0 +1,4 @@
+src/components/FileUploader.tsx(79,17): error TS2322: Type '(e: React.DragEvent<HTMLDivElement>) => void' is not assignable to type 'DragEventHandler<HTMLLabelElement>'.
+  Types of parameters 'e' and 'event' are incompatible.
+    Type 'DragEvent<HTMLLabelElement>' is not assignable to type 'DragEvent<HTMLDivElement>'.
+      Property 'align' is missing in type 'HTMLLabelElement' but required in type 'HTMLDivElement'.
