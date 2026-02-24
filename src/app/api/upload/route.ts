@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 
 export const runtime = "nodejs";
@@ -11,13 +11,13 @@ cloudinary.config({
 
 /* ✅ helper function — THIS is the key */
 function uploadToCloudinary(buffer: Buffer): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
         { folder: "companion-ai/avatars" },
         (error, result) => {
           if (error || !result) {
-            reject(error);
+            reject(error ?? new Error("Upload returned no result"));
           } else {
             resolve(result.secure_url);
           }
@@ -27,7 +27,7 @@ function uploadToCloudinary(buffer: Buffer): Promise<string> {
   });
 }
 
-export async function POST(req: Request): Promise<Response> {
+export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file");
@@ -41,13 +41,14 @@ export async function POST(req: Request): Promise<Response> {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const url = await uploadToCloudinary(buffer);
+    const url: string = await uploadToCloudinary(buffer);
 
     return NextResponse.json({ url }, { status: 200 });
-  } catch (error) {
-    console.error("Upload error:", error);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Upload failed";
+    console.error("Upload error:", message);
     return NextResponse.json(
-      { error: "Upload failed" },
+      { error: message },
       { status: 500 }
     );
   }
