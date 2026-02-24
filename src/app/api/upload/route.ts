@@ -10,35 +10,37 @@ cloudinary.config({
 export async function POST(req: Request): Promise<Response> {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json(
         { error: "No file provided" },
         { status: 400 }
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    const uploadResult = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          { folder: "companion-ai/avatars" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        )
-        .end(buffer);
-    });
+    const result = await new Promise<{ secure_url: string }>(
+      (resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: "companion-ai/avatars" },
+            (error, res) => {
+              if (error || !res) reject(error);
+              else resolve(res);
+            }
+          )
+          .end(buffer);
+      }
+    );
 
-    return NextResponse.json({
-      url: uploadResult.secure_url,
-    });
-  } catch (error) {
-    console.error("Upload error:", error);
+    return NextResponse.json(
+      { url: result.secure_url },
+      { status: 200 }
+    );
+  } catch (err) {
+    console.error("Upload error:", err);
     return NextResponse.json(
       { error: "Upload failed" },
       { status: 500 }
