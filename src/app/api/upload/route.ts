@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -25,31 +26,22 @@ function uploadToCloudinary(buffer: Buffer): Promise<string> {
   });
 }
 
-export async function POST(req: Request): Promise<Response> {
+export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return new Response(
-        JSON.stringify({ error: "No file provided" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const url = await uploadToCloudinary(buffer);
 
-    return new Response(
-      JSON.stringify({ url }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return NextResponse.json({ url }, { status: 200 });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Upload failed";
     console.error("Upload error:", message);
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
