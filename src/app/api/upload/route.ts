@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
@@ -21,27 +20,25 @@ export async function POST(req: Request): Promise<Response> {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const uploadResult = await new Promise<{ secure_url: string }>(
-      (resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            { folder: "companion-ai/avatars" },
-            (error, result) => {
-              if (error || !result) {
-                reject(error);
-              } else {
-                resolve({ secure_url: result.secure_url });
-              }
-            }
-          )
-          .end(buffer);
-      }
-    );
+    let secureUrl = "";
 
-    return NextResponse.json(
-      { url: uploadResult.secure_url },
-      { status: 200 }
-    );
+    await new Promise<void>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          { folder: "companion-ai/avatars" },
+          (error, result) => {
+            if (error || !result) {
+              reject(error);
+            } else {
+              secureUrl = result.secure_url;
+              resolve();
+            }
+          }
+        )
+        .end(buffer);
+    });
+
+    return NextResponse.json({ url: secureUrl }, { status: 200 });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(
