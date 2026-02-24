@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGO_URL")
+}
+
+model User {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  email  String  @unique
+  avatar String?
+  role   Role    @default(USER)
+
+  Companion    Companion[]
+  Verification Verification[]
+  messages     Message[]
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+}
+
+model Companion {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  avatar String
+
+  creatorId String @db.ObjectId
+  Creator   User   @relation(references: [id], fields: [creatorId], onDelete: Cascade)
+
+  description String
+  instruction String
+
+  category String
+  Category Category @relation(references: [name], fields: [category], onUpdate: Cascade)
+
+  isPublic Boolean @default(false)
+
+  messages Message[]
+  Verification Verification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Verification {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  companionId String    @db.ObjectId
+  Companion   Companion @relation(fields: [companionId], references: [id], onDelete: Cascade)
+
+  userId String @db.ObjectId
+  User   User   @relation(references: [id], fields: [userId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  name      String      @unique
+  Companion Companion[]
+
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  role      String // "user" or "model"
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companionId String    @db.ObjectId
+  Companion   Companion @relation(fields: [companionId], references: [id], onDelete: Cascade)
+
+  userId String @db.ObjectId
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
