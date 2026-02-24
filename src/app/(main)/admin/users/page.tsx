@@ -3,6 +3,8 @@ import { db } from '@/lib/db'
 import { getServerSideUser } from '@/lib/getServerSideUser'
 import React from 'react'
 
+export const dynamic = "force-dynamic"
+
 const page = async () => {
 
     const user = await getServerSideUser()

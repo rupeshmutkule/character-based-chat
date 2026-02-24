@@ -2,6 +2,8 @@ import CompanionBars from '@/components/admin/CompanionBars'
 import { db } from '@/lib/db'
 import React from 'react'
 
+export const dynamic = "force-dynamic"
+
 
 
 
