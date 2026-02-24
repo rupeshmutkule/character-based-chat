@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-export const POST = async (req: NextRequest) => {
+export async function POST(req: NextRequest): Promise<Response> {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file") as File | null;
 
     if (!file) {
       return NextResponse.json(
@@ -38,15 +38,15 @@ export const POST = async (req: NextRequest) => {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to Cloudinary
-    return new Promise((resolve) => {
+    // ✅ IMPORTANT FIX: explicitly type Promise<Response>
+    const response = await new Promise<Response>((resolve) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: "companion-ai/avatars",
           resource_type: "auto",
           quality: "auto",
         },
-        (error: any, result: any) => {
+        (error, result) => {
           if (error) {
             console.error("Cloudinary error:", error);
             resolve(
@@ -60,8 +60,8 @@ export const POST = async (req: NextRequest) => {
               NextResponse.json(
                 {
                   success: true,
-                  url: result.secure_url,
-                  fileUrl: result.secure_url,
+                  url: result?.secure_url,
+                  fileUrl: result?.secure_url,
                 },
                 { status: 200 }
               )
@@ -72,6 +72,8 @@ export const POST = async (req: NextRequest) => {
 
       uploadStream.end(buffer);
     });
+
+    return response;
   } catch (error: any) {
     console.error("Upload error:", error);
     return NextResponse.json(
@@ -79,4 +81,4 @@ export const POST = async (req: NextRequest) => {
       { status: 500 }
     );
   }
-};
+}
